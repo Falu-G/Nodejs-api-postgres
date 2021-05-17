@@ -1,14 +1,14 @@
 const Pool = require('pg').Pool
 const pool = new Pool({
-  user: 'me',
+  Player: 'me',
   host: 'localhost',
   database: 'api',
   password: 'password',
   port: 5432,
 })
 
-const getUsers = (request, response) => {
-  pool.query('SELECT * FROM users ORDER BY id ASC', (error, results) => {
+const getPlayers = (request, response) => {
+  pool.query('SELECT * FROM players ORDER BY id ASC', (error, results) => {
     if (error) {
       throw error
     }
@@ -16,10 +16,10 @@ const getUsers = (request, response) => {
   })
 }
 
-const getUserById = (request, response) => {
+const getPlayerById = (request, response) => {
   const id = parseInt(request.params.id)
 
-  pool.query('SELECT * FROM users WHERE id = $1', [id], (error, results) => {
+  pool.query('SELECT * FROM players WHERE id = $1', [id], (error, results) => {
     if (error) {
       throw error
     }
@@ -27,26 +27,30 @@ const getUserById = (request, response) => {
   })
 }
 
-const createUser = (request, response) => {
-  const { name, email } = request.body
+const createPlayer = (request, response) => {
+  let  { name, position, clubname } = request.body
+  let avatar = request.file;
 
-  pool.query('INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *', [name, email], (error, results) => {
+
+  pool.query('INSERT INTO players (name, position, clubname, avatar) VALUES ($1, $2, $3, $4) RETURNING *', [ name, position, clubname, avatar], (error, results) => {
     if (error) {
       throw error
     } else if (!Array.isArray(results.rows) || results.rows.length < 1) {
     	throw error
     }
-    response.status(201).send(`User added with ID: ${results.rows[0].id}`)
+    response.status(200).send(`Player added with ID: ${results.rows[0].id}`)
   })
 }
 
-const updateUser = (request, response) => {
+
+const patialupdatePlayer = (request, response) => {
   const id = parseInt(request.params.id)
-  const { name, email } = request.body
+  let  { name, position, clubname } = request.body
+ 
 
   pool.query(
-    'UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING *',
-    [name, email, id],
+    'UPDATE players SET name = $1, position = $2, clubname =$3 WHERE id = $4 RETURNING *',
+    [ name, position, clubname, id],
     (error, results) => {
       if (error) {
         throw error
@@ -54,30 +58,56 @@ const updateUser = (request, response) => {
       if (typeof results.rows == 'undefined') {
       	response.status(404).send(`Resource not found`);
       } else if (Array.isArray(results.rows) && results.rows.length < 1) {
-      	response.status(404).send(`User not found`);
+      	response.status(404).send(`Player not found`);
       } else {
-  	 	  response.status(200).send(`User modified with ID: ${results.rows[0].id}`)         	
+  	 	  response.status(200).send(`Player modified with ID: ${results.rows[0].id}`)         	
       }
       
     }
   )
 }
 
-const deleteUser = (request, response) => {
+
+const updatePlayer = (request, response) => {
+  const id = parseInt(request.params.id)
+  
+  const avatar = request.file;
+
+  pool.query(
+    'UPDATE players SET avatar =$1 WHERE id = $2 RETURNING *',
+    [ avatar, id],
+    (error, results) => {
+      if (error) {
+        throw error
+      } 
+      if (typeof results.rows == 'undefined') {
+      	response.status(404).send(`Resource not found`);
+      } else if (Array.isArray(results.rows) && results.rows.length < 1) {
+      	response.status(404).send(`Player not found`);
+      } else {
+  	 	  response.status(200).send(`Player modified with ID: ${results.rows[0].id}`)         	
+      }
+      
+    }
+  )
+}
+
+const deletePlayer = (request, response) => {
   const id = parseInt(request.params.id)
 
-  pool.query('DELETE FROM users WHERE id = $1', [id], (error, results) => {
+  pool.query('DELETE FROM players WHERE id = $1', [id], (error, results) => {
     if (error) {
       throw error
     }
-    response.status(200).send(`User deleted with ID: ${id}`)
+    response.status(200).send(`Player deleted with ID: ${id}`)
   })
 }
 
 module.exports = {
-  getUsers,
-  getUserById,
-  createUser,
-  updateUser,
-  deleteUser,
+  getPlayers,
+  getPlayerById,
+  createPlayer,
+  updatePlayer,
+  deletePlayer,
+  patialupdatePlayer
 }
